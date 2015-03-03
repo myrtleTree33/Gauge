@@ -14,7 +14,7 @@
 
 int main(int argc, const char* argv[]) {
     // host-related stuff
-    char name[20];
+    char nickname[20];
 
     int sock, recvBytes;
     char sendData[1024], recvData[1024];
@@ -38,6 +38,12 @@ int main(int argc, const char* argv[]) {
             inet_ntoa(serverAddr.sin_addr),ntohs(serverAddr.sin_port));
 
     puts("");
+    // retrieve nickname ----------------
+    printf("Enter your nickname: ");
+    scanf("%s", nickname);
+    //-----------------------------------
+
+
     puts("== Welcome to the Gauge Chat Client ==");
     puts("/nick - set username /chat - chat user /help - show help menu");
 

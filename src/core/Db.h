@@ -43,5 +43,9 @@ void Db_deletebyId(Db_t * target, char * nickname);
 
 void Db_reset(Db_t * target);
 
+char * Db_serialize(Db_t * target);
+
+void Db_deserialize(Db_t * target, char * stream);
+
 
 #endif DB_H

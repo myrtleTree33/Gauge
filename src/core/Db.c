@@ -74,3 +74,43 @@ void Db_reset(Db_t * target) {
         LIST_REMOVE(target->head.lh_first, pointers);
     }
 }
+
+
+char * Db_serialize(Db_t * target) {
+    char * buffer = calloc(1, target->size * (sizeof(DbEntry_t) + sizeof(int))); // needed for spaces
+    DbEntry_t * curr;
+    unsigned long i = 0;
+    unsigned long offset = sizeof(int);
+    memcpy(buffer, &(target->size), offset);
+
+    for (curr = target->head.lh_first; curr != NULL; curr = curr->pointers.le_next) {
+        strncpy(buffer + offset + i * (sizeof(DbEntry_t)), curr->nickname, sizeof(curr->nickname));
+        strncpy(buffer + offset + i * (sizeof(DbEntry_t)) + sizeof(curr->nickname), curr->ip, sizeof(curr->ip));
+        i++;
+    }
+    return buffer;
+}
+
+
+void Db_deserialize(Db_t * target, char * stream) {
+    int size = 0;
+    unsigned long i = 0;
+    unsigned long offset = sizeof(int);
+    char nickname[12], ip[12];
+
+    memcpy(&size, stream, sizeof(int));
+    printf("Size=%d\n", size);
+
+    // clear target first
+    Db_reset(target);
+
+    // populate with fields
+    target->size = size;
+
+    for (i = 0; i < size; i++) {
+        //TODO Get rid of 20 magic numbers
+        strncpy(nickname, stream + offset + i * sizeof(DbEntry_t), 12);
+        strncpy(ip, stream + offset + i * sizeof(DbEntry_t) + 12, 12);
+        Db_insert(target, DbEntry_create(nickname, ip, 6500));
+    }
+}

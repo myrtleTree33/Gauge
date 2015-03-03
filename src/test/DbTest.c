@@ -28,6 +28,15 @@ int main() {
     DbEntry_t * entryFound = Db_findById(database, "mary");
     DbEntry_print(entryFound);
 
+    puts("Test serialize");
+    char * stream = Db_serialize(database);
+
+    puts("Test deserialize");
+    Db_t * database2 = Db_create();
+    Db_deserialize(database2, stream);
+    puts("   Showing output after deserialization -->");
+    Db_show(database2);
+
     puts("test delete by ID");
     Db_deletebyId(database, "mary");
     Db_show(database);
@@ -38,6 +47,9 @@ int main() {
 
     puts("test DB free");
     Db_free(database);
+    Db_free(database2);
+
+
 
 
     puts("====== End of Test DB ==========");
