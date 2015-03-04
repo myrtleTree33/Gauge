@@ -13,14 +13,44 @@
 
 #include "../core/Socket.h"
 
-void *thread_prompt(void *ptr) {
-    puts("hello world");
+
+GtkBuilder *builder;
+
+void onDelete(GtkWidget * widget, GdkEvent * event, gpointer data) {
+    g_print("delete event occured\n");
 }
 
 
-int main(int argc, const char *argv[]) {
-    gtk_init(&argc, &argv);
-    GtkBuilder *builder;
+void onSubmit(GtkWidget * widget, GdkEvent * event, gpointer data) {
+    gchar buffer[200];
+    GtkWidget * txtPrompt = GTK_WIDGET (gtk_builder_get_object(builder, "txtPrompt"));
+    gchar * input = gtk_entry_get_text(GTK_ENTRY(txtPrompt));
+    strcpy(buffer, input);
+    gtk_entry_set_text(GTK_ENTRY(txtPrompt), "");
+    g_print(buffer);
+    g_print("Submit clicked\n");
+}
+
+void gtkTextViewAppend(GtkWidget *textview, gchar *text)
+{
+    GtkTextBuffer *tbuffer;
+    GtkTextIter itr;
+
+    tbuffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(textview));
+    gtk_text_buffer_get_end_iter(tbuffer, &itr);
+    gtk_text_buffer_insert(tbuffer, &itr, text, -1);
+}
+
+
+void display(gchar * input) {
+    GtkWidget * viewMain = gtk_builder_get_object(builder, "viewMain");
+    gtkTextViewAppend(viewMain, input);
+}
+
+
+void *threadFn_ui(void *varargp) {
+//    gtk_init(&argc, &argv);
+    gtk_init(NULL, NULL);
     GtkWidget *window;
 
     builder = gtk_builder_new();
@@ -28,16 +58,20 @@ int main(int argc, const char *argv[]) {
 
     window = GTK_WIDGET (gtk_builder_get_object(builder, "window1"));
     gtk_builder_connect_signals(builder, NULL);
-    g_object_unref(G_OBJECT (builder));
 
-    gtk_widget_show (window);
-    gtk_main ();
+    display("i am here!");
+    display("haha");
 
-//    while(1) {};
+    gtk_widget_show(window);
+    gtk_main();
+}
 
 
 
-//    pthread_t inc
+int main(int argc, const char *argv[]) {
+
+    pthread_t thread_ui;
+    pthread_create(&thread_ui, NULL, threadFn_ui, NULL);
 
     // host-related stuff
     char nickname[20];
