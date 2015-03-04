@@ -12,9 +12,12 @@
 #include <gtk/gtk.h>
 
 #include "../core/Socket.h"
+#include "../core/Db.h"
+#include "../core/Parser.h"
 
 
 GtkBuilder *builder;
+char * nickname[12];
 
 void onDelete(GtkWidget * widget, GdkEvent * event, gpointer data) {
     g_print("delete event occured\n");
@@ -42,7 +45,7 @@ void gtkTextViewAppend(GtkWidget *textview, gchar *text)
 }
 
 
-void display(gchar * input) {
+void display(char * input) {
     GtkWidget * viewMain = gtk_builder_get_object(builder, "viewMain");
     gtkTextViewAppend(viewMain, input);
 }
@@ -59,23 +62,18 @@ void *threadFn_ui(void *varargp) {
     window = GTK_WIDGET (gtk_builder_get_object(builder, "window1"));
     gtk_builder_connect_signals(builder, NULL);
 
-    display("i am here!");
-    display("haha");
+    display("== Welcome to the Gauge Chat Client ==\n");
+    display("Welcome, ");
+    display(nickname);
+    display("!!\n");
+    display("/nick - set username /chat - chat user /help - show help menu\n");
 
     gtk_widget_show(window);
     gtk_main();
 }
 
 
-
-int main(int argc, const char *argv[]) {
-
-    pthread_t thread_ui;
-    pthread_create(&thread_ui, NULL, threadFn_ui, NULL);
-
-    // host-related stuff
-    char nickname[20];
-
+void *threadFn_join(void * varargp) {
     int sock, recvBytes;
     char sendData[1024], recvData[1024];
     struct hostent *host;
@@ -98,14 +96,8 @@ int main(int argc, const char *argv[]) {
             inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port));
 
     puts("");
-    // retrieve nickname ----------------
-    printf("Enter your nickname: ");
-    scanf("%s", nickname);
-    //-----------------------------------
 
 
-    puts("== Welcome to the Gauge Chat Client ==");
-    puts("/nick - set username /chat - chat user /help - show help menu");
 
     while (1) {
         //Input data from user through Standard Input device
@@ -130,5 +122,25 @@ int main(int argc, const char *argv[]) {
         }
 
     }
+
+}
+
+
+int main(int argc, const char *argv[]) {
+    // retrieve nickname ----------------
+    printf("Enter your nickname: ");
+    scanf("%s", nickname);
+    //------------name-----------------------
+
+    // host-related stuff
+    pthread_t thread_ui, thread_server;
+    pthread_create(&thread_ui, NULL, threadFn_ui, NULL);
+
+    sleep(2);
+
+    pthread_create(&thread_server, NULL, threadFn_join, NULL);
+
+    while(1) {}
+
     return 0;
 }
