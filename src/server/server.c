@@ -34,7 +34,9 @@ int callbackList() {
     return 0;
 }
 
-int callbackLeave() {
+int callbackLeave(int sockfd, char * nickname) {
+    Db_deletebyId(database, nickname);
+    Db_show(database);
     return 0;
 }
 
@@ -84,6 +86,9 @@ int main(int argc, const char *argv[]) {
 
         if (strcmp(msg->command, "JOIN") == 0) {
             callbackJoin(connected, msg, ip, port);
+
+        } else if (strcmp(msg->command, "BYE") == 0) {
+            callbackLeave(connected, msg->payload);
         }
 
         msg_free(msg);
@@ -91,6 +96,7 @@ int main(int argc, const char *argv[]) {
 
     }
 
+    Db_free(database);
     return 0;
 }
 

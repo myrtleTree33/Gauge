@@ -12,6 +12,8 @@ typedef struct {
 
 Msg_t *msg_new(char *cmd, char *payload);
 
+Msg_t * msg_fromUserInput(char * inputString);
+
 Msg_t *msg_fromString(char *raw);
 
 char * msg_toString(Msg_t * target);

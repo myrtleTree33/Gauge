@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <gtk/gtk.h>
+#include <Parser.h>
 
 #include "../core/Socket.h"
 #include "../core/Db.h"
@@ -18,6 +19,10 @@
 
 GtkBuilder *builder;
 char * nickname[12];
+
+void *threadFn_join(void * varargp);
+void *threadFn_leave(void * varargp);
+
 
 void onDelete(GtkWidget * widget, GdkEvent * event, gpointer data) {
     g_print("delete event occured\n");
@@ -32,6 +37,22 @@ void onSubmit(GtkWidget * widget, GdkEvent * event, gpointer data) {
     gtk_entry_set_text(GTK_ENTRY(txtPrompt), "");
     g_print(buffer);
     g_print("Submit clicked\n");
+    // ------ real stuff here ------------
+    Msg_t * msg = msg_fromUserInput(buffer);
+    g_print("Cmd=%s Payload=%s\n", msg->command, msg->payload);
+
+    if (strcmp(msg->command, "JOIN") == 0) {
+        g_print("Join called\n");
+        pthread_t thread_web;
+        pthread_create(&thread_web, NULL, threadFn_join, NULL);
+
+    } else if (strcmp(msg->command, "BYE") == 0) {
+        g_print("Leave called\n");
+        pthread_t thread_web;
+        pthread_create(&thread_web, NULL, threadFn_leave, NULL);
+    }
+
+    msg_free(msg);
 }
 
 void gtkTextViewAppend(GtkWidget *textview, gchar *text)
@@ -101,32 +122,37 @@ void *threadFn_join(void * varargp) {
     Msg_t * msgSend = msg_new("JOIN", nickname);
     char * raw = msg_toString(msgSend);
     send(sock, raw, 1024, 0);
+}
 
 
-//    while (1) {
-//        //Input data from user through Standard Input device
-//        printf("\nTYPE ANY TEXT TO SEND (q or Q to quit) : ");
-//        gets(sendData);
-//
-//        if (strcmp(sendData, "q") != 0 && strcmp(sendData, "Q") != 0) {
-//            //send data to server
-//            send(sock, sendData, strlen(sendData), 0);
-//
-//            //get reply from server
-//            recvBytes = recv(sock, recvData, 1024, 0);
-//            recvData[recvBytes] = '\0';
-//
-//            //process data. Here, we simply print it
-//            printf("\n%s ", recvData);
-//        }
-//        else {//send q or Q to server and close connection
-//            send(sock, sendData, strlen(sendData), 0);
-//            close(sock);
-//            break;
-//        }
-//
-//    }
+void *threadFn_leave(void * varargp) {
+    int sock, recvBytes;
+    char sendData[1024], recvData[1024];
+    struct hostent *host;
+    struct sockaddr_in serverAddr;
 
+    host = gethostbyname("127.0.0.1");
+
+    // create client socket fd
+    sock = Socket(AF_INET, SOCK_STREAM, 0);
+
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(5000);
+    serverAddr.sin_addr = *((struct in_addr *) host->h_addr);
+    bzero(&(serverAddr.sin_zero), 8);
+
+    //connect to server at port 5000
+    Connect(sock, (struct sockaddr *) &serverAddr, sizeof(struct sockaddr));
+
+    printf("\n I am conneted to (%s , %d)",
+            inet_ntoa(serverAddr.sin_addr), ntohs(serverAddr.sin_port));
+
+    puts("");
+
+    // make payload and send
+    Msg_t * msgSend = msg_new("BYE", nickname);
+    char * raw = msg_toString(msgSend);
+    send(sock, raw, 1024, 0);
 }
 
 
