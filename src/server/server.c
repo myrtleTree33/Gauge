@@ -8,24 +8,33 @@
 #include <errno.h>
 #include <string.h>
 #include <stdbool.h>
+#include <Parser.h>
 #include "EventListener.h"
 
 #include "../core/Socket.h"
+#include "../core/Db.h"
+#include "../core/Parser.h"
 
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
+Db_t * database;
 
-int callbackRegister(int connection, char * opr, char * payload) {
+
+int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
+    puts("");
+    printf("nick=%s ip=%s port=%d\n", msg->payload, ip, port);
+    Db_insert(database, DbEntry_create(msg->payload, ip, port));
+    Db_show(database);
     return 0;
 }
 
-int callbackList(int connection, char * opr, char * payload) {
+int callbackList() {
     return 0;
 }
 
-int callbackDeregister(int connection, char * opr, char * payload) {
+int callbackLeave() {
     return 0;
 }
 
@@ -38,16 +47,7 @@ int main(int argc, const char *argv[]) {
     struct sockaddr_in serverAddr, clientAddr;
     unsigned int sinSize;
 
-    // for the event listener
-    EventListener_t * ell = EventListener_create();
-    Event_t eventRegister, eventList, eventDeregister;
-    Event_fill(&eventRegister, "REG", callbackRegister);
-    Event_fill(&eventList, "LIST", callbackList);
-    Event_fill(&eventDeregister, "DEREG", callbackDeregister);
-    EventListener_addEvent(ell, eventRegister);
-    EventListener_addEvent(ell, eventList);
-    EventListener_addEvent(ell, eventDeregister);
-
+    database = Db_create();
 
     sock = Socket(AF_INET, SOCK_STREAM, 0);
     SetSockOpt(sock, SOL_SOCKET, SO_REUSEADDR, &_true, sizeof(int));
@@ -63,10 +63,10 @@ int main(int argc, const char *argv[]) {
     printf("\nMy TCP ECHO Server is Waiting for client on port 5000\n");
     fflush(stdout);
 
-    char * ip;
+    char *ip;
     int port;
 
-    while(1) {
+    while (1) {
         sinSize = sizeof(struct sockaddr_in);
         connected = accept(sock, (struct sockaddr *) &clientAddr, &sinSize);
         ip = inet_ntoa(clientAddr.sin_addr);
@@ -75,24 +75,23 @@ int main(int argc, const char *argv[]) {
         printf("\n I got a connection from (%s , %d)", ip, port);
         fflush(stdout);
 
-        // receives client data
-        while(1) {
-            recvBytes = recv(connected, recvData, 1024, 0);
-            recvData[recvBytes] = '\0';
-            printf("RECV=%s", recvData);
-            fflush(stdout);
-//            EventListener_yield(ell, connected, recvData);
+        Msg_t *msg;
+        char buffer[1024];
+        recvBytes = recv(connected, buffer, 1024, 0);
+        msg = msg_fromString(buffer);
+        msg_display(msg);
+        fflush(stdout);
 
-            strcpy(reply, "");
-            strcat(reply, "ECHO FROM SERVER: ");
-            strcat(reply, recvData);
-
-            //send reply to client
-            send(connected, reply, strlen(reply), 0);
+        if (strcmp(msg->command, "JOIN") == 0) {
+            callbackJoin(connected, msg, ip, port);
         }
+
+        msg_free(msg);
+        close(connected);
+
     }
 
-    EventListener_free(ell);
     return 0;
 }
+
 #pragma clang diagnostic pop

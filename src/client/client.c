@@ -97,31 +97,35 @@ void *threadFn_join(void * varargp) {
 
     puts("");
 
+    // make payload and send
+    Msg_t * msgSend = msg_new("JOIN", nickname);
+    char * raw = msg_toString(msgSend);
+    send(sock, raw, 1024, 0);
 
 
-    while (1) {
-        //Input data from user through Standard Input device
-        printf("\nTYPE ANY TEXT TO SEND (q or Q to quit) : ");
-        gets(sendData);
-
-        if (strcmp(sendData, "q") != 0 && strcmp(sendData, "Q") != 0) {
-            //send data to server
-            send(sock, sendData, strlen(sendData), 0);
-
-            //get reply from server
-            recvBytes = recv(sock, recvData, 1024, 0);
-            recvData[recvBytes] = '\0';
-
-            //process data. Here, we simply print it
-            printf("\n%s ", recvData);
-        }
-        else {//send q or Q to server and close connection
-            send(sock, sendData, strlen(sendData), 0);
-            close(sock);
-            break;
-        }
-
-    }
+//    while (1) {
+//        //Input data from user through Standard Input device
+//        printf("\nTYPE ANY TEXT TO SEND (q or Q to quit) : ");
+//        gets(sendData);
+//
+//        if (strcmp(sendData, "q") != 0 && strcmp(sendData, "Q") != 0) {
+//            //send data to server
+//            send(sock, sendData, strlen(sendData), 0);
+//
+//            //get reply from server
+//            recvBytes = recv(sock, recvData, 1024, 0);
+//            recvData[recvBytes] = '\0';
+//
+//            //process data. Here, we simply print it
+//            printf("\n%s ", recvData);
+//        }
+//        else {//send q or Q to server and close connection
+//            send(sock, sendData, strlen(sendData), 0);
+//            close(sock);
+//            break;
+//        }
+//
+//    }
 
 }
 
