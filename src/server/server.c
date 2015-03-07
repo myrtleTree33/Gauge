@@ -30,13 +30,16 @@ int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
     return 0;
 }
 
-int callbackList() {
-    return 0;
-}
-
 int callbackLeave(int sockfd, char * nickname) {
     Db_deletebyId(database, nickname);
     Db_show(database);
+    return 0;
+}
+
+int callbackList(int sockfd, char * nickname) {
+    puts("List database called.");
+    char * buffer = Db_serialize(database);
+    send(sockfd, buffer, 1024, 0);
     return 0;
 }
 
@@ -86,6 +89,9 @@ int main(int argc, const char *argv[]) {
 
         if (strcmp(msg->command, "JOIN") == 0) {
             callbackJoin(connected, msg, ip, port);
+
+        } else if (strcmp(msg->command, "LIST") == 0) {
+            callbackList(connected, msg->payload);
 
         } else if (strcmp(msg->command, "BYE") == 0) {
             callbackLeave(connected, msg->payload);

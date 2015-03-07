@@ -18,6 +18,23 @@ void DbEntry_print(DbEntry_t *target) {
     printf("%s@%s:%d\n", target->nickname, target->ip, target->port);
 }
 
+void DbEntry_print_custom(DbEntry_t * target, void (*printFn)(char * message)) {
+    printFn(target->nickname);
+    printFn("@");
+    printFn(target->ip);
+    printFn("\n");
+}
+
+void Db_print_custom(Db_t * target, void (*printFn)(char * message)) {
+    DbEntry_t *curr;
+    printFn("--- Userlist ---\n");
+    for (curr = target->head.lh_first; curr != NULL; curr = curr->pointers.le_next) {
+        DbEntry_print_custom(curr,printFn);
+    }
+    printFn("----------------\n");
+
+}
+
 
 Db_t *Db_create() {
     Db_t *target = calloc(1, sizeof(Db_t));

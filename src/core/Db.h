@@ -47,5 +47,9 @@ char * Db_serialize(Db_t * target);
 
 void Db_deserialize(Db_t * target, char * stream);
 
+void DbEntry_print_custom(DbEntry_t * target, void (*printFn)(char * message));
+
+void Db_print_custom(Db_t * target, void (*printFn)(char * message));
+
 
 #endif DB_H
