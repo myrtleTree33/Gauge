@@ -1,5 +1,9 @@
 #include "Db.h"
 
+
+/**
+* Creates a DB Entry instance.
+*/
 DbEntry_t *DbEntry_create(char *nickname, char *ip, uint16_t port) {
     DbEntry_t *target = calloc(1, sizeof(DbEntry_t));
     strcpy(target->nickname, nickname);
@@ -9,15 +13,25 @@ DbEntry_t *DbEntry_create(char *nickname, char *ip, uint16_t port) {
 }
 
 
+/**
+* Free memory from DB Entry
+*/
 void DbEntry_free(DbEntry_t *target) {
     free(target);
 }
 
 
+/**
+* Print a DB entry
+*/
 void DbEntry_print(DbEntry_t *target) {
     printf("%s@%s:%d\n", target->nickname, target->ip, target->port);
 }
 
+
+/**
+* Print using a custom print handler.  Useful for output to GTK3 screen.
+*/
 void DbEntry_print_custom(DbEntry_t *target, void (*printFn)(char *message)) {
     printFn(target->nickname);
     printFn("@");
@@ -25,6 +39,10 @@ void DbEntry_print_custom(DbEntry_t *target, void (*printFn)(char *message)) {
     printFn("\n");
 }
 
+
+/**
+* Print using a custom print handler.  Useful for output to GTK3 screen.
+*/
 void Db_print_custom(Db_t *target, void (*printFn)(char *message)) {
     DbEntry_t *curr;
     printFn("--- Userlist ---\n");
@@ -36,18 +54,29 @@ void Db_print_custom(Db_t *target, void (*printFn)(char *message)) {
 }
 
 
+/**
+* Creates a new DB.  A Database is a linked list of DBEntries.  A linked list is needed
+* to reduce complexity of dealing with logins and logouts, empty records, handling a flexible size
+* of records, etc.
+*/
 Db_t *Db_create() {
     Db_t *target = calloc(1, sizeof(Db_t));
     LIST_INIT(&(target->head));
-};
+}
 
 
+/**
+* Frees a DB.
+*/
 void Db_free(Db_t *target) {
     Db_reset(target);
     free(target);
 }
 
 
+/**
+* Insert a new DB entry, into the DB.
+*/
 int Db_insert(Db_t *target, DbEntry_t *record) {
     target->size++;
     LIST_INSERT_HEAD(&(target->head), record, pointers);
@@ -55,6 +84,9 @@ int Db_insert(Db_t *target, DbEntry_t *record) {
 }
 
 
+/**
+* Show contents of DB.  For custom printing to GTK window, use Db_print_custom().
+*/
 void Db_show(Db_t *target) {
     DbEntry_t *curr;
     puts("--- Userlist ---");
@@ -65,6 +97,9 @@ void Db_show(Db_t *target) {
 }
 
 
+/**
+* Find DB Entry by nickname.
+*/
 DbEntry_t *Db_findById(Db_t *target, char *nickname) {
     DbEntry_t *curr;
     for (curr = target->head.lh_first; curr != NULL; curr = curr->pointers.le_next) {
@@ -76,6 +111,9 @@ DbEntry_t *Db_findById(Db_t *target, char *nickname) {
 }
 
 
+/**
+* Delete DB Entry by nickname.
+*/
 void Db_deletebyId(Db_t *target, char *nickname) {
     DbEntry_t *item = Db_findById(target, nickname);
     if (item == NULL) {
@@ -86,6 +124,9 @@ void Db_deletebyId(Db_t *target, char *nickname) {
 }
 
 
+/**
+* Reset all records in DB.
+*/
 void Db_reset(Db_t *target) {
     while (target->head.lh_first != NULL) {
         LIST_REMOVE(target->head.lh_first, pointers);
@@ -93,6 +134,12 @@ void Db_reset(Db_t *target) {
 }
 
 
+/**
+* Serialize a DB, for transmission over TCP / UDP.
+*
+* This is done by first encoding the DB length as first element of stream, and encoding the rest of DB data.
+*
+*/
 char *Db_serialize(Db_t *target) {
     char *buffer = calloc(1, target->size * (sizeof(DbEntry_t) + sizeof(int))); // needed for spaces
     DbEntry_t *curr;
@@ -114,6 +161,9 @@ char *Db_serialize(Db_t *target) {
 }
 
 
+/**
+* Deserialize and reconstruct a DB from stream sent via TCP or UDP.
+*/
 void Db_deserialize(Db_t *target, char *stream) {
     int size = 0;
     unsigned long i = 0;

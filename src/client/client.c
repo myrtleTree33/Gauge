@@ -17,11 +17,11 @@
 #include "../core/Parser.h"
 
 
+/** Global vars **/
 GtkBuilder *builder;
 char *nickname[12];
 Db_t *database;
 int udpPort;
-
 char chatPerson[12];
 
 
@@ -32,14 +32,37 @@ void *threadFn_list(void *varargp);
 void *threadFn_leave(void *varargp);
 
 
+/**
+* Window handler, triggered when main window is closed.
+*/
 void onDelete(GtkWidget *widget, GdkEvent *event, gpointer data) {
     g_print("delete event occured\n");
     pthread_t thread_web;
+    // Send logout to main server
     pthread_create(&thread_web, NULL, threadFn_leave, NULL);
 }
 
 
+/**
+* Window handler, when submit button is clicked.
+*
+* The following commands are implemented:
+*
+* /JOIN             Manually trigger a login to main server.
+* /BYE              Manually trigger a logout to main server.
+* /LIST             Get the user list from main server.
+* /CHAT <nickname>  Set the current target person to chat to, by nickname
+* <some text>       If no command specified, sends chat message to target person.
+*
+* A usual workflow as follow:
+*
+* /LIST         // Retrieve userlist
+* /CHAT john    // Set CHAT target to John.
+* Hello there!  // Send the message "Hello there!" to John.
+*
+*/
 void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
+    // Sets up the GTK3 interface --------
     gchar buffer[200];
     GtkWidget *txtPrompt = GTK_WIDGET (gtk_builder_get_object(builder, "txtPrompt"));
     gchar *input = gtk_entry_get_text(GTK_ENTRY(txtPrompt));
@@ -89,6 +112,9 @@ void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
 }
 
 
+/**
+* Sends UDP chat message to specified hostname at port.
+*/
 void sendChatMessage(char *hostname, int port, char *message) {
     int sock, bytes_read;
     unsigned int addr_len;
@@ -117,6 +143,9 @@ void sendChatMessage(char *hostname, int port, char *message) {
 }
 
 
+/**
+* Helper function to append text to textview in GTK3 widget.
+*/
 void gtkTextViewAppend(GtkWidget *textview, gchar *text) {
     GtkTextBuffer *tbuffer;
     GtkTextIter itr;
@@ -127,12 +156,18 @@ void gtkTextViewAppend(GtkWidget *textview, gchar *text) {
 }
 
 
+/**
+* Helper function to display string in chat window.
+*/
 void display(char *input) {
     GtkWidget *viewMain = gtk_builder_get_object(builder, "viewMain");
     gtkTextViewAppend(viewMain, input);
 }
 
 
+/**
+* Creates GTK GUI, from Glade XML file.
+*/
 void *threadFn_ui(void *varargp) {
 //    gtk_init(&argc, &argv);
     gtk_init(NULL, NULL);
@@ -155,6 +190,9 @@ void *threadFn_ui(void *varargp) {
 }
 
 
+/**
+* Thread to send login signal via TCP to main server.
+*/
 void *threadFn_join(void *varargp) {
     int sock, recvBytes;
     char sendData[1024], recvData[1024];
@@ -186,6 +224,9 @@ void *threadFn_join(void *varargp) {
 }
 
 
+/**
+* Thread to retrieve login list from main server via TCP.
+*/
 void *threadFn_list(void *varargp) {
     int sock, recvBytes;
     char sendData[1024], recvData[1024];
@@ -224,6 +265,9 @@ void *threadFn_list(void *varargp) {
 }
 
 
+/**
+* Thread to logout from main server via TCP.
+*/
 void *threadFn_leave(void *varargp) {
     int sock, recvBytes;
     char sendData[1024], recvData[1024];
@@ -255,6 +299,9 @@ void *threadFn_leave(void *varargp) {
 }
 
 
+/**
+* Thread to start UDP server which listens for text messages.
+*/
 void *threadFn_udpServer(void *varargp) {
     int sock;
     int bytesRead;
@@ -302,6 +349,10 @@ void *threadFn_udpServer(void *varargp) {
 
 }
 
+
+/**
+* Main function to start threads.
+*/
 int main(int argc, const char *argv[]) {
     // retrieve nickname ----------------
     printf("Enter your nickname: ");

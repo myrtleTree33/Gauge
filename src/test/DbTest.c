@@ -3,6 +3,9 @@
 
 #include "../core/Db.h"
 
+/**
+* This is a test driver for DB and DBEntry
+*/
 int main() {
     puts("====== Start of Test DB ==========");
     puts("test creation of DB entry");
@@ -48,9 +51,6 @@ int main() {
     puts("test DB free");
     Db_free(database);
     Db_free(database2);
-
-
-
 
     puts("====== End of Test DB ==========");
     return 0;
