@@ -17,15 +17,21 @@
 #include "../core/Parser.h"
 
 
+#define SERVER_PORT 9000
+
+
 /**
 * Gauge CLIENT
+*
+*
+* ./client <UDP port number> <server hostname>
 *
 * Note: If different port needed (e.g. for development, specify as a command-line arg.
 *
 * i.e.
 *
 *
-*   $ ./client 8000     ## Run client with UDP server at port 8000
+*   $ ./client 8000 127.0.0.1    ## Run client with UDP server at port 8000
 *
 *
 */
@@ -37,6 +43,7 @@ char *nickname[12];
 Db_t *database;
 int udpPort;
 char chatPerson[12];
+char hostAddress[12];
 
 
 void *threadFn_join(void *varargp);
@@ -105,6 +112,12 @@ void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
     } else if (strcmp(msg->command, "send") == 0) {
         g_print("Chat message sent\n");
         DbEntry_t * entry = Db_findById(database, chatPerson);
+
+        if (entry == NULL) {
+            display("Oops.  Cannot send message.  Did you select the right person?\n");
+            msg_free(msg);
+            return;
+        }
 
         // create nice nick info
         char sendMessage[1024];
@@ -213,17 +226,17 @@ void *threadFn_join(void *varargp) {
     struct hostent *host;
     struct sockaddr_in serverAddr;
 
-    host = gethostbyname("127.0.0.1");
+    host = gethostbyname(hostAddress);
 
     // create client socket fd
     sock = Socket(AF_INET, SOCK_STREAM, 0);
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(5000);
+    serverAddr.sin_port = htons(SERVER_PORT);
     serverAddr.sin_addr = *((struct in_addr *) host->h_addr);
     bzero(&(serverAddr.sin_zero), 8);
 
-    //connect to server at port 5000
+    //connect to server at port 9000
     Connect(sock, (struct sockaddr *) &serverAddr, sizeof(struct sockaddr));
 
     printf("\n I am conneted to (%s , %d)",
@@ -247,17 +260,17 @@ void *threadFn_list(void *varargp) {
     struct hostent *host;
     struct sockaddr_in serverAddr;
 
-    host = gethostbyname("127.0.0.1");
+    host = gethostbyname(hostAddress);
 
     // create client socket fd
     sock = Socket(AF_INET, SOCK_STREAM, 0);
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(5000);
+    serverAddr.sin_port = htons(SERVER_PORT);
     serverAddr.sin_addr = *((struct in_addr *) host->h_addr);
     bzero(&(serverAddr.sin_zero), 8);
 
-    //connect to server at port 5000
+    //connect to server at port 9000
     Connect(sock, (struct sockaddr *) &serverAddr, sizeof(struct sockaddr));
 
     printf("\n I am conneted to (%s , %d)",
@@ -288,17 +301,17 @@ void *threadFn_leave(void *varargp) {
     struct hostent *host;
     struct sockaddr_in serverAddr;
 
-    host = gethostbyname("127.0.0.1");
+    host = gethostbyname(hostAddress);
 
     // create client socket fd
     sock = Socket(AF_INET, SOCK_STREAM, 0);
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(5000);
+    serverAddr.sin_port = htons(SERVER_PORT);
     serverAddr.sin_addr = *((struct in_addr *) host->h_addr);
     bzero(&(serverAddr.sin_zero), 8);
 
-    //connect to server at port 5000
+    //connect to server at port 9000
     Connect(sock, (struct sockaddr *) &serverAddr, sizeof(struct sockaddr));
 
     printf("\n I am conneted to (%s , %d)",
@@ -376,10 +389,12 @@ int main(int argc, const char *argv[]) {
     scanf("%s", (char *) nickname);
     //------------name-----------------------
 
-    if (argc != 2) {
+    if (argc != 3) {
         udpPort = 6500;
+        strcpy(hostAddress, hostAddress);
     } else {
         udpPort = atoi(argv[1]);
+        strcpy(hostAddress, argv[2]);
         printf("Port=%d\n", udpPort);
     }
 

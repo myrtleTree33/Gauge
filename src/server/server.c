@@ -27,7 +27,7 @@ Db_t * database;
 int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
     puts("");
     printf("nick=%s ip=%s port=%d\n", msg->payload, ip, port);
-    Db_insert(database, DbEntry_create(msg->payload, ip, port));
+    Db_insert(database, DbEntry_create(msg->payload, ip, 6500));
     Db_show(database);
     return 0;
 }
@@ -74,14 +74,14 @@ int main(int argc, const char *argv[]) {
     SetSockOpt(sock, SOL_SOCKET, SO_REUSEADDR, &_true, sizeof(int));
 
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(5000);
+    serverAddr.sin_port = htons(9000);
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(serverAddr.sin_zero), 8);
 
     Bind(sock, (struct sockaddr *) &serverAddr, sizeof(struct sockaddr));
     Listen(sock, 5);
 
-    printf("\nMy TCP ECHO Server is Waiting for client on port 5000\n");
+    printf("\nMy TCP ECHO Server is Waiting for client on port 9000\n");
     fflush(stdout);
 
     char *ip;
