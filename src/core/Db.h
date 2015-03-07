@@ -8,7 +8,10 @@
 #include <stdio.h>
 
 /**
-* This is a database class, consisting of multiple DB Entries
+* This is a database class, consisting of a linked list of multiple DB Entries.
+*
+* Please refer to C file for more information on usage.
+*
 */
 
 typedef struct DbEntry {

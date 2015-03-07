@@ -18,6 +18,10 @@ Msg_t *msg_new(char *cmd, char *payload) {
 *
 * If no command is given, then the whole chunk is intepreted as text to send user.
 *
+* Please note that if no payload is to be specified, include a space character at end.
+*
+* e.g. /JOIN would be "/JOIN ".
+*
 */
 Msg_t *msg_fromUserInput(char *inputString) {
     Msg_t *target = calloc(1, sizeof(Msg_t));
@@ -44,6 +48,9 @@ Msg_t *msg_fromUserInput(char *inputString) {
 }
 
 
+/** Create a message from a string.  NOT USER INPUT.
+*
+*/
 Msg_t *msg_fromString(char *raw) {
     Msg_t *target = calloc(1, sizeof(Msg_t));
     strncpy(target->command, raw, 5);
@@ -51,6 +58,10 @@ Msg_t *msg_fromString(char *raw) {
     return target;
 }
 
+
+/**
+* Dump message as a string, for serializing.
+*/
 char *msg_toString(Msg_t *target) {
     char buffer[1015];
     strncpy(buffer, target->command, 5);
@@ -58,10 +69,18 @@ char *msg_toString(Msg_t *target) {
     return buffer;
 }
 
+
+/**
+* Display a message output to screen, for debugging purposes.
+*/
 void *msg_display(Msg_t *target) {
     printf("CMD=%s MSG=%s", target->command, target->payload);
 }
 
+
+/**
+* Free message data.
+*/
 void msg_free(Msg_t *target) {
     free(target);
 }
