@@ -68,8 +68,16 @@ void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
     } else if (strcmp(msg->command, "send") == 0) {
         g_print("Chat message sent\n");
         DbEntry_t * entry = Db_findById(database, chatPerson);
+
+        // create nice nick info
+        char sendMessage[1024];
+        char recvMessage[1024];
+        sprintf(sendMessage, "From [%s]: %s\n", nickname, msg->payload);
+        sprintf(recvMessage, "[Me]: %s\n", msg->payload);
+        display(recvMessage);
+
         g_print("Attempting send to: %s@%s:%d\n", entry->nickname, entry->ip, entry->port);
-        sendChatMessage(entry->ip, entry->port, msg->payload);
+        sendChatMessage(entry->ip, entry->port, sendMessage);
 
     } else if (strcmp(msg->command, "BYE") == 0) {
         g_print("Leave called\n");
@@ -288,6 +296,7 @@ void *threadFn_udpServer(void *varargp) {
                 ntohs(client_addr.sin_port));
         printf("%s", recv_data);
         fflush(stdout);
+        display(recv_data);
     }
     return 0;
 
