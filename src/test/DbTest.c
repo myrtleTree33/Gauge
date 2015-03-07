@@ -7,8 +7,8 @@ int main() {
     puts("====== Start of Test DB ==========");
     puts("test creation of DB entry");
     DbEntry_t * entry = DbEntry_create("jhtong", "127.0.0.1", 6500);
-    DbEntry_t * entry2 = DbEntry_create("mary", "127.0.0.2", 6500);
-    DbEntry_t * entry3 = DbEntry_create("john", "127.0.0.3", 6500);
+    DbEntry_t * entry2 = DbEntry_create("mary", "127.0.0.2", 7000);
+    DbEntry_t * entry3 = DbEntry_create("john", "127.0.0.3", 8000);
 
     puts("test display of single DB entry");
     DbEntry_print(entry);

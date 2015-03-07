@@ -18,18 +18,18 @@ void DbEntry_print(DbEntry_t *target) {
     printf("%s@%s:%d\n", target->nickname, target->ip, target->port);
 }
 
-void DbEntry_print_custom(DbEntry_t * target, void (*printFn)(char * message)) {
+void DbEntry_print_custom(DbEntry_t *target, void (*printFn)(char *message)) {
     printFn(target->nickname);
     printFn("@");
     printFn(target->ip);
     printFn("\n");
 }
 
-void Db_print_custom(Db_t * target, void (*printFn)(char * message)) {
+void Db_print_custom(Db_t *target, void (*printFn)(char *message)) {
     DbEntry_t *curr;
     printFn("--- Userlist ---\n");
     for (curr = target->head.lh_first; curr != NULL; curr = curr->pointers.le_next) {
-        DbEntry_print_custom(curr,printFn);
+        DbEntry_print_custom(curr, printFn);
     }
     printFn("----------------\n");
 
@@ -86,34 +86,40 @@ void Db_deletebyId(Db_t *target, char *nickname) {
 }
 
 
-void Db_reset(Db_t * target) {
-    while(target->head.lh_first != NULL) {
+void Db_reset(Db_t *target) {
+    while (target->head.lh_first != NULL) {
         LIST_REMOVE(target->head.lh_first, pointers);
     }
 }
 
 
-char * Db_serialize(Db_t * target) {
-    char * buffer = calloc(1, target->size * (sizeof(DbEntry_t) + sizeof(int))); // needed for spaces
-    DbEntry_t * curr;
+char *Db_serialize(Db_t *target) {
+    char *buffer = calloc(1, target->size * (sizeof(DbEntry_t) + sizeof(int))); // needed for spaces
+    DbEntry_t *curr;
     unsigned long i = 0;
     unsigned long offset = sizeof(int);
     memcpy(buffer, &(target->size), offset);
 
     for (curr = target->head.lh_first; curr != NULL; curr = curr->pointers.le_next) {
-        strncpy(buffer + offset + i * (sizeof(DbEntry_t)), curr->nickname, sizeof(curr->nickname));
-        strncpy(buffer + offset + i * (sizeof(DbEntry_t)) + sizeof(curr->nickname), curr->ip, sizeof(curr->ip));
+        printf("Copied.\n");
+//        strncpy(buffer + offset + i * (sizeof(DbEntry_t)), curr->nickname, sizeof(curr->nickname));
+//        strncpy(buffer + offset + i * (sizeof(DbEntry_t)) + sizeof(curr->nickname), curr->ip, sizeof(curr->ip));
+//        memcpy(buffer + offset + i * (sizeof(DbEntry_t)) + sizeof(curr->nickname) + sizeof(curr->ip),
+//                curr->port, 4);
+        memcpy(buffer + offset + i * sizeof(DbEntry_t), curr, sizeof(DbEntry_t));
+
         i++;
     }
     return buffer;
 }
 
 
-void Db_deserialize(Db_t * target, char * stream) {
+void Db_deserialize(Db_t *target, char *stream) {
     int size = 0;
     unsigned long i = 0;
     unsigned long offset = sizeof(int);
     char nickname[12], ip[12];
+    int port;
 
     memcpy(&size, stream, sizeof(int));
     printf("Size=%d\n", size);
@@ -128,6 +134,7 @@ void Db_deserialize(Db_t * target, char * stream) {
         //TODO Get rid of 20 magic numbers
         strncpy(nickname, stream + offset + i * sizeof(DbEntry_t), 12);
         strncpy(ip, stream + offset + i * sizeof(DbEntry_t) + 12, 12);
-        Db_insert(target, DbEntry_create(nickname, ip, 6500));
+        memcpy(&port, stream + offset + i * sizeof(DbEntry_t) + 12 + 12, 4);
+        Db_insert(target, DbEntry_create(nickname, ip, port));
     }
 }

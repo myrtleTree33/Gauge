@@ -19,7 +19,10 @@
 
 GtkBuilder *builder;
 char *nickname[12];
-Db_t * database;
+Db_t *database;
+int udpPort;
+
+char chatPerson[12];
 
 
 void *threadFn_join(void *varargp);
@@ -58,6 +61,16 @@ void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
         pthread_t thread_web;
         pthread_create(&thread_web, NULL, threadFn_list, NULL);
 
+    } else if (strcmp(msg->command, "CHAT") == 0) {
+        g_print("Chat called\n");
+        strcpy(chatPerson, msg->payload);
+
+    } else if (strcmp(msg->command, "send") == 0) {
+        g_print("Chat message sent\n");
+        DbEntry_t * entry = Db_findById(database, chatPerson);
+        g_print("Attempting send to: %s@%s:%d\n", entry->nickname, entry->ip, entry->port);
+        sendChatMessage(entry->ip, entry->port, msg->payload);
+
     } else if (strcmp(msg->command, "BYE") == 0) {
         g_print("Leave called\n");
         pthread_t thread_web;
@@ -66,6 +79,35 @@ void onSubmit(GtkWidget *widget, GdkEvent *event, gpointer data) {
 
     msg_free(msg);
 }
+
+
+void sendChatMessage(char *hostname, int port, char *message) {
+    int sock, bytes_read;
+    unsigned int addr_len;
+    struct sockaddr_in server_addr;
+    struct hostent *host;
+
+//Create a datagram socket (connection less)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        perror("socket");
+        exit(1);
+    }
+
+//Fill-up details of Server Address (IP,Port...)
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port); //Server Port
+    host = (struct hostent *) gethostbyname((char *) hostname); //server IP
+    server_addr.sin_addr = *((struct in_addr *) host->h_addr); //server IP
+    bzero(&(server_addr.sin_zero), 8);
+
+    addr_len = sizeof(struct sockaddr);
+
+    //Send a datagram to Server
+    sendto(sock, message, strlen(message), 0,
+            (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
+
+}
+
 
 void gtkTextViewAppend(GtkWidget *textview, gchar *text) {
     GtkTextBuffer *tbuffer;
@@ -166,7 +208,7 @@ void *threadFn_list(void *varargp) {
     send(sock, raw, 1024, 0);
 
     // expect reply
-    recvBytes = recv(sock, recvData,1024,0);
+    recvBytes = recv(sock, recvData, 1024, 0);
     Db_deserialize(database, recvData);
     display("Database deserialized.\n");
     Db_print_custom(database, display);
@@ -205,22 +247,76 @@ void *threadFn_leave(void *varargp) {
 }
 
 
+void *threadFn_udpServer(void *varargp) {
+    int sock;
+    int bytesRead;
+    unsigned int addrLen;
+    char recv_data[1024], reply_data[1024];
+    struct sockaddr_in server_addr, client_addr;
+
+    //Create a datagram socket (connection less)
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        perror("Socket");
+        exit(1);
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(udpPort);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    bzero(&(server_addr.sin_zero), 8);
+
+    //bind the sockt to local Internet Address (IP and PORT).
+    if (bind(sock, (struct sockaddr *) &server_addr,
+            sizeof(struct sockaddr)) == -1) {
+        perror("Bind");
+        exit(1);
+    }
+
+    addrLen = sizeof(struct sockaddr);
+
+    printf("\nUDPServer Waiting for DATA from client on port %d\n", udpPort);
+    fflush(stdout);
+
+    while (1) {
+        //receive data from the client
+        bytesRead = recvfrom(sock, recv_data, 1024, 0,
+                (struct sockaddr *) &client_addr, &addrLen);
+        recv_data[bytesRead] = '\0';
+
+        //process data. Here, we just print it and Reply to Client
+        printf("\n(%s , %d) said : ", inet_ntoa(client_addr.sin_addr),
+                ntohs(client_addr.sin_port));
+        printf("%s", recv_data);
+        fflush(stdout);
+    }
+    return 0;
+
+}
+
 int main(int argc, const char *argv[]) {
     // retrieve nickname ----------------
     printf("Enter your nickname: ");
     scanf("%s", nickname);
     //------------name-----------------------
 
+    if (argc != 2) {
+        udpPort = 6500;
+    } else {
+        udpPort = atoi(argv[1]);
+        printf("Port=%d\n", udpPort);
+    }
+
     // setup database
     database = Db_create();
 
     // host-related stuff
-    pthread_t thread_ui, thread_server;
+    pthread_t thread_ui, thread_server, thread_udpServer;
     pthread_create(&thread_ui, NULL, threadFn_ui, NULL);
 
     sleep(2);
 
     pthread_create(&thread_server, NULL, threadFn_join, NULL);
+    pthread_create(&thread_udpServer, NULL, threadFn_udpServer, NULL);
 
     while (1) {}
     Db_free(database);

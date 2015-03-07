@@ -10,7 +10,7 @@
 typedef struct DbEntry {
     char nickname[12]; //TODO resize
     char ip[12]; // TODO resize
-    uint16_t port;
+    int port;
     LIST_ENTRY(DbEntry) pointers;
 } DbEntry_t;
 

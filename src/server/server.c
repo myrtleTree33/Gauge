@@ -54,6 +54,12 @@ int main(int argc, const char *argv[]) {
 
     database = Db_create();
 
+    // FOR MOCKING ------------------
+    Db_insert(database, DbEntry_create("test1", "127.0.0.1", 8000));
+    Db_insert(database, DbEntry_create("test2", "127.0.0.1", 8001));
+    // /FOR MOCKING ------------------
+
+
     sock = Socket(AF_INET, SOCK_STREAM, 0);
     SetSockOpt(sock, SOL_SOCKET, SO_REUSEADDR, &_true, sizeof(int));
 
