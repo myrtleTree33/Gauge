@@ -9,7 +9,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <Parser.h>
-#include "EventListener.h"
 
 #include "../core/Socket.h"
 #include "../core/Db.h"
@@ -22,6 +21,9 @@
 Db_t * database;
 
 
+/**
+* Called to perform login entry to DB.
+*/
 int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
     puts("");
     printf("nick=%s ip=%s port=%d\n", msg->payload, ip, port);
@@ -30,12 +32,20 @@ int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
     return 0;
 }
 
+
+/**
+* Called when logout needed.
+*/
 int callbackLeave(int sockfd, char * nickname) {
     Db_deletebyId(database, nickname);
     Db_show(database);
     return 0;
 }
 
+
+/**
+* Called when list performed.
+*/
 int callbackList(int sockfd, char * nickname) {
     puts("List database called.");
     char * buffer = Db_serialize(database);
@@ -54,10 +64,10 @@ int main(int argc, const char *argv[]) {
 
     database = Db_create();
 
-    // FOR MOCKING ------------------
+    // FOR MOCKING, REMOVE IN PRODUCTION  ------------------
     Db_insert(database, DbEntry_create("test1", "127.0.0.1", 8000));
     Db_insert(database, DbEntry_create("test2", "127.0.0.1", 8001));
-    // /FOR MOCKING ------------------
+    // /FOR MOCKING, REMOVE IN PRODUCTION  -----------------
 
 
     sock = Socket(AF_INET, SOCK_STREAM, 0);

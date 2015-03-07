@@ -12,6 +12,10 @@
 #include <string.h>
 #include <stdbool.h>
 
+/**
+* This is a wrapper class for socket functions, comprising error messages.
+*/
+
 int Socket(int domain, int type, int protocol);
 
 void SetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);

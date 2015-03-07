@@ -16,6 +16,8 @@
 #include <string.h>
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 int main(int argc, const char *argv[]) {
     int sock, connected, bytes_recieved, true = 1;
     char reply[1024], recv_data[1024];
@@ -71,7 +73,7 @@ int main(int argc, const char *argv[]) {
 
         while (1) {
             //receive data from the client
-            bytes_recieved = recv(connected, recv_data, 1024, 0);
+            bytes_recieved = (int) recv(connected, recv_data, 1024, 0);
             recv_data[bytes_recieved] = '\0';
             printf("\n RECIEVED DATA = %s ", recv_data);
             fflush(stdout);
@@ -97,3 +99,4 @@ int main(int argc, const char *argv[]) {
     close(sock);
     return 0;
 }
+#pragma clang diagnostic pop

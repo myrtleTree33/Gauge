@@ -17,6 +17,20 @@
 #include "../core/Parser.h"
 
 
+/**
+* Gauge CLIENT
+*
+* Note: If different port needed (e.g. for development, specify as a command-line arg.
+*
+* i.e.
+*
+*
+*   $ ./client 8000     ## Run client with UDP server at port 8000
+*
+*
+*/
+
+
 /** Global vars **/
 GtkBuilder *builder;
 char *nickname[12];
@@ -299,6 +313,8 @@ void *threadFn_leave(void *varargp) {
 }
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 /**
 * Thread to start UDP server which listens for text messages.
 */
@@ -316,7 +332,7 @@ void *threadFn_udpServer(void *varargp) {
     }
 
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(udpPort);
+    server_addr.sin_port = htons((uint16_t) udpPort);
     server_addr.sin_addr.s_addr = INADDR_ANY;
     bzero(&(server_addr.sin_zero), 8);
 
@@ -334,8 +350,8 @@ void *threadFn_udpServer(void *varargp) {
 
     while (1) {
         //receive data from the client
-        bytesRead = recvfrom(sock, recv_data, 1024, 0,
-                (struct sockaddr *) &client_addr, &addrLen);
+        bytesRead = (int) recvfrom(sock, recv_data, 1024, 0,
+                        (struct sockaddr *) &client_addr, &addrLen);
         recv_data[bytesRead] = '\0';
 
         //process data. Here, we just print it and Reply to Client
@@ -348,6 +364,7 @@ void *threadFn_udpServer(void *varargp) {
     return 0;
 
 }
+#pragma clang diagnostic pop
 
 
 /**
@@ -356,7 +373,7 @@ void *threadFn_udpServer(void *varargp) {
 int main(int argc, const char *argv[]) {
     // retrieve nickname ----------------
     printf("Enter your nickname: ");
-    scanf("%s", nickname);
+    scanf("%s", (char *) nickname);
     //------------name-----------------------
 
     if (argc != 2) {
