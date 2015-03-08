@@ -14,6 +14,8 @@
 #include "../core/Db.h"
 #include "../core/Parser.h"
 
+#define CLIENT_PORT 9060
+
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
@@ -27,7 +29,7 @@ Db_t * database;
 int callbackJoin(int sockfd, Msg_t * msg, char * ip, int port) {
     puts("");
     printf("nick=%s ip=%s port=%d\n", msg->payload, ip, port);
-    Db_insert(database, DbEntry_create(msg->payload, ip, 6500));
+    Db_insert(database, DbEntry_create(msg->payload, ip, CLIENT_PORT));
     Db_show(database);
     return 0;
 }
