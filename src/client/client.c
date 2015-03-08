@@ -18,6 +18,7 @@
 
 
 #define SERVER_PORT 9000
+#define CLIENT_PORT 9060
 
 
 /**
@@ -390,7 +391,7 @@ int main(int argc, const char *argv[]) {
     //------------name-----------------------
 
     if (argc != 3) {
-        udpPort = 6500;
+        udpPort = CLIENT_PORT;
         strcpy(hostAddress, hostAddress);
     } else {
         udpPort = atoi(argv[1]);
